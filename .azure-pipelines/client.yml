@@ -27,10 +27,18 @@ jobs:
         inputs:
           ArtifactName: packages
 
-  - job: 'Test_Windows'
+- job: 'Test'
+  strategy:
+    matrix:
+      Linux:
+        os.name: 'Linux'
+        os.vmImage: 'ubuntu-16.04'
+      Windows:
+        os.name: 'Windows'
+        os.vmImage: 'vs2017-win2016'
 
     pool:
-      vmImage: 'vs2017-win2016'
+      vmImage: '$(os.vmImage)'
 
     steps:
       - task: DotNetCoreInstaller@0
@@ -48,21 +56,4 @@ jobs:
         displayName: 'Component Detection'
         # ComponentGovernance is currently unable to run on pull requests of public projects.  Running on
         # scheduled builds should be good enough.
-        condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'))
-
-  - job: 'Test_Linux'
-
-    pool:
-      vmImage: 'ubuntu-16.04'
-
-    steps:
-      - task: DotNetCoreInstaller@0
-        displayName: 'Use .NET Core sdk 2.1.503'
-        inputs:
-          version: 2.1.503
-
-      - task: DotNetCoreCLI@2
-        displayName: 'Build & Test'
-        inputs:
-          command: test
-          projects: '$(ProjectFile)'
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'), eq(variables['os.name'],'Windows'))
